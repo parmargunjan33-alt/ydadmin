@@ -1,0 +1,20 @@
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+
+class AdminMiddleware
+{
+    public function handle(Request $request, Closure $next)
+    {
+        $adminMobiles = explode(',', env('ADMIN_MOBILES', ''));
+
+        if (!in_array($request->user()?->mobile, $adminMobiles)) {
+            return response()->json(['message' => 'Unauthorized. Admin access only.'], 403);
+        }
+
+        return $next($request);
+    }
+}
