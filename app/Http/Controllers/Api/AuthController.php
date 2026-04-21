@@ -57,8 +57,7 @@ class AuthController extends Controller
     // STEP 2: Verify OTP from Email
     public function verifyOtp(Request $request)
     {
-        Log::info('OTP Verification Attempt');
-                $request->validate([
+        $request->validate([
             'email' => 'required|email',
             'otp'   => 'required|digits:6',
         ]);
