@@ -11,18 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('otps', function (Blueprint $table) {
-            // Check if email column doesn't exist, then add it
-            if (!Schema::hasColumn('otps', 'email')) {
-                $table->string('email')->nullable()->after('mobile');
-            }
-            
-            // Check if mobile column exists and change it to nullable
-            if (Schema::hasColumn('otps', 'mobile')) {
-                // Modify mobile to be nullable
-                $table->string('mobile', 15)->nullable()->change();
-            }
-        });
+        
     }
 
     /**
