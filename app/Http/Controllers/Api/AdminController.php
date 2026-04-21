@@ -13,10 +13,11 @@ class AdminController extends Controller
     {
         $request->validate([
             'subject_id'    => 'required|exists:subjects,id',
+            'semester_id'   => 'nullable|exists:semesters,id',
             'title'         => 'required|string',
             'type'          => 'required|in:summary,past_papers,imp_questions',
-            'is_free'       => 'boolean',
-            'display_order' => 'integer',
+            'is_free'       => 'required|boolean',
+            'display_order' => 'required|integer',
             'pdf'           => 'required|file|mimes:pdf|max:20480',
         ]);
 
@@ -24,12 +25,13 @@ class AdminController extends Controller
 
         $pdf = PdfFile::create([
             'subject_id'    => $request->subject_id,
+            'semester_id'   => $request->semester_id,
             'title'         => $request->title,
             'type'          => $request->type,
             'file_path'     => $path,
             'file_size'     => $request->file('pdf')->getSize(),
-            'is_free'       => $request->boolean('is_free', false),
-            'display_order' => $request->integer('display_order', 0),
+            'is_free'       => $request->boolean('is_free'),
+            'display_order' => $request->integer('display_order'),
             'is_active'     => true,
         ]);
 

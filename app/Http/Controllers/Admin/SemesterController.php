@@ -27,7 +27,7 @@ class SemesterController extends Controller
             'course_id' => 'required|exists:courses,id',
             'number' => 'required|integer',
             'label' => 'required|string|max:255',
-            'is_active' => 'nullable|boolean',
+            'is_active' => 'required|boolean',
             'end_date' => 'nullable|date',
         ]);
 
@@ -47,7 +47,7 @@ class SemesterController extends Controller
             'course_id' => 'required|exists:courses,id',
             'number' => 'required|integer',
             'label' => 'required|string|max:255',
-            'is_active' => 'nullable|boolean',
+            'is_active' => 'required|boolean',
             'end_date' => 'nullable|date',
         ]);
 

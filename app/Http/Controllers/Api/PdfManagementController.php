@@ -57,7 +57,7 @@ class PdfManagementController extends Controller
     public function uploadPdfs(Request $request)
     {
         $validated = $request->validate([
-            'semester_id' => 'required|exists:semesters,id',
+            'semester_id' => 'nullable|exists:semesters,id',
             'subject_id' => 'required|exists:subjects,id',
             'language' => 'required|in:gujarati,english',
             'pdfs' => 'required|array|min:1',

@@ -26,7 +26,7 @@ class AdminUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:admin_users,email',
             'password' => 'required|string|min:8|confirmed',
-            'is_active' => 'nullable|boolean',
+            'is_active' => 'required|boolean',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
@@ -45,7 +45,7 @@ class AdminUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:admin_users,email,' . $adminUser->id,
             'password' => 'nullable|string|min:8|confirmed',
-            'is_active' => 'nullable|boolean',
+            'is_active' => 'required|boolean',
         ]);
 
         if ($validated['password'] ?? null) {

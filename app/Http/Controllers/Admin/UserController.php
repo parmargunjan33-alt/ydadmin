@@ -28,8 +28,8 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'is_active' => 'nullable|boolean',
-            'mobile_verified' => 'nullable|boolean',
+            'is_active' => 'required|boolean',
+            'mobile_verified' => 'required|boolean',
         ]);
 
         $user->update($validated);

@@ -26,10 +26,10 @@ class CourseController extends Controller
         $validated = $request->validate([
             'university_id' => 'required|exists:universities,id',
             'name' => 'required|string|max:255',
-            'type' => 'required|string|max:100',
-            'language' => 'required|string|max:100',
-            'is_active' => 'nullable|boolean',
-            'display_order' => 'nullable|integer',
+            'type' => 'nullable|string|max:100',
+            'language' => 'required|in:gujarati,english',
+            'is_active' => 'required|boolean',
+            'display_order' => 'required|integer',
         ]);
 
         Course::create($validated);
@@ -47,10 +47,10 @@ class CourseController extends Controller
         $validated = $request->validate([
             'university_id' => 'required|exists:universities,id',
             'name' => 'required|string|max:255',
-            'type' => 'required|string|max:100',
-            'language' => 'required|string|max:100',
-            'is_active' => 'nullable|boolean',
-            'display_order' => 'nullable|integer',
+            'type' => 'nullable|string|max:100',
+            'language' => 'required|in:gujarati,english',
+            'is_active' => 'required|boolean',
+            'display_order' => 'required|integer',
         ]);
 
         $course->update($validated);

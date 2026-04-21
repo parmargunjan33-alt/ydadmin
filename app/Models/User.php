@@ -13,6 +13,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name', 'email', 'mobile', 'password',
         'device_id', 'device_name',
+        'email_verified', 'email_verified_at',
         'mobile_verified', 'mobile_verified_at',
         'university_id', 'course_id', 'semester_id',
         'is_active',
@@ -21,6 +22,8 @@ class User extends Authenticatable
     protected $hidden = ['password', 'remember_token'];
 
     protected $casts = [
+        'email_verified'     => 'boolean',
+        'email_verified_at'  => 'datetime',
         'mobile_verified'    => 'boolean',
         'mobile_verified_at' => 'datetime',
         'is_active'          => 'boolean',

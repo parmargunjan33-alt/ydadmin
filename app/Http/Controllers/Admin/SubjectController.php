@@ -30,8 +30,8 @@ class SubjectController extends Controller
         $validated = $request->validate([
             'semester_id' => 'required|exists:semesters,id',
             'name' => 'required|string|max:255',
-            'is_active' => 'nullable|boolean',
-            'display_order' => 'nullable|integer',
+            'is_active' => 'required|boolean',
+            'display_order' => 'required|integer',
         ]);
 
         Subject::create($validated);
@@ -53,8 +53,8 @@ class SubjectController extends Controller
         $validated = $request->validate([
             'semester_id' => 'required|exists:semesters,id',
             'name' => 'required|string|max:255',
-            'is_active' => 'nullable|boolean',
-            'display_order' => 'nullable|integer',
+            'is_active' => 'required|boolean',
+            'display_order' => 'required|integer',
         ]);
 
         $subject->update($validated);

@@ -32,14 +32,14 @@ class PdfController extends Controller
     {
         $validated = $request->validate([
             'subject_id' => 'required|exists:subjects,id',
-            'semester_id' => 'required|exists:semesters,id',
+            'semester_id' => 'nullable|exists:semesters,id',
             'title' => 'required|string|max:255',
             'type' => 'required|in:summary,past_papers,imp_questions,notes',
             'language' => 'required|in:gujarati,english',
             'pdfs' => 'required|array|min:1',
             'pdfs.*' => 'required|file|mimes:pdf|max:102400', // 100MB per file
-            'is_free' => 'nullable|boolean',
-            'display_order' => 'nullable|integer',
+            'is_free' => 'required|boolean',
+            'display_order' => 'required|integer',
         ]);
 
         $subject = Subject::findOrFail($validated['subject_id']);
@@ -86,9 +86,9 @@ class PdfController extends Controller
             'title' => 'required|string|max:255',
             'type' => 'required|in:summary,past_papers,imp_questions,notes',
             'language' => 'required|in:gujarati,english',
-            'is_free' => 'boolean',
-            'display_order' => 'nullable|integer|min:1',
-            'is_active' => 'boolean',
+            'is_free' => 'required|boolean',
+            'display_order' => 'required|integer|min:1',
+            'is_active' => 'required|boolean',
         ]);
 
         $pdf->update($validated);

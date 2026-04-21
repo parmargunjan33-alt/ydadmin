@@ -24,9 +24,9 @@ class UniversityController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'short_name' => 'required|string|max:50',
-            'city' => 'required|string|max:100',
-            'is_active' => 'nullable|boolean',
-            'display_order' => 'nullable|integer',
+            'city' => 'nullable|string|max:100',
+            'is_active' => 'required|boolean',
+            'display_order' => 'required|integer',
         ]);
 
         University::create($validated);
@@ -43,9 +43,9 @@ class UniversityController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'short_name' => 'required|string|max:50',
-            'city' => 'required|string|max:100',
-            'is_active' => 'nullable|boolean',
-            'display_order' => 'nullable|integer',
+            'city' => 'nullable|string|max:100',
+            'is_active' => 'required|boolean',
+            'display_order' => 'required|integer',
         ]);
 
         $university->update($validated);
