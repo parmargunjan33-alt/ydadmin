@@ -10,7 +10,7 @@ class AppConfigController extends Controller
 {
     public function index()
     {
-        $configs = AppConfig::paginate(15);
+        $configs = AppConfig::where('key','subscription_price')->paginate(15);
         return view('admin.config.index', compact('configs'));
     }
 
