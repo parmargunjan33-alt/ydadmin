@@ -15,7 +15,6 @@ return new class extends Migration
             // Check if email column doesn't exist, then add it
             if (!Schema::hasColumn('otps', 'email')) {
                 $table->string('email')->nullable()->after('mobile');
-                $table->index('email');
             }
             
             // Check if mobile column exists and change it to nullable
