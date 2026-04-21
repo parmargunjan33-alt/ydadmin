@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::table('otps', function (Blueprint $table) {
             $table->string('email', 255)->nullable()->after('mobile');
             $table->dropIndex(['mobile']);
-            $table->index(['email', 'mobile']);
         });
     }
 
