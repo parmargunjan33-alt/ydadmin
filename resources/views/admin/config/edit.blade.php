@@ -24,13 +24,29 @@
                         </div>
 
                         <div class="form-group mb-3">
-                            <label for="value" class="form-label">Value *</label>
-                            <textarea name="value" id="value" class="form-control @error('value') is-invalid @enderror" 
-                                rows="6" required>{{ old('value', $config->value ?? '') }}</textarea>
+                            @if ($config->key === 'subscription_price')
+                                <label for="value" class="form-label">Subscription Price (Rs.) *</label>
+                                <input type="number" name="value" id="value"
+                                    class="form-control @error('value') is-invalid @enderror"
+                                    value="{{ old('value', number_format(((int) $config->value) / 100, 2, '.', '')) }}"
+                                    min="1" step="0.01" required>
+                                <small class="text-muted">Enter the amount in rupees. Example: 75 means Rs. 75.</small>
+                            @else
+                                <label for="value" class="form-label">Value *</label>
+                                <textarea name="value" id="value" class="form-control @error('value') is-invalid @enderror" 
+                                    rows="6" required>{{ old('value', $config->value ?? '') }}</textarea>
+                            @endif
                             @error('value')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+
+                        @if ($config->description)
+                            <div class="form-group mb-3">
+                                <label class="form-label">Description</label>
+                                <p class="form-control-plaintext">{{ $config->description }}</p>
+                            </div>
+                        @endif
 
                         <div class="form-group">
                             <button type="submit" class="btn btn-primary">

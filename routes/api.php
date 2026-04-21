@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\PdfManagementController;
+use App\Http\Controllers\Api\LegalController;
 use Illuminate\Support\Facades\Route;
 
 // ── PUBLIC ROUTES (no login needed) ─────────────────────────
@@ -20,7 +21,13 @@ Route::get('/courses/{universityId}',  [ContentController::class, 'courses']);
 Route::get('/semesters/{courseId}',    [ContentController::class, 'semesters']);
 Route::get('/subjects/{semesterId}',    [ContentController::class, 'subjects']);
 
+Route::get('/payment/subscription-price', [PaymentController::class, 'subscriptionPrice']);
 Route::post('/payment/webhook',        [PaymentController::class, 'webhook']);
+
+// Legal
+Route::get('/terms-and-conditions',     [LegalController::class, 'getTermsAndConditions']);
+Route::get('/privacy-policy',           [LegalController::class, 'getPrivacyPolicy']);
+Route::get('/contact-info',             [LegalController::class, 'getContactInfo']);
 
 // ── PROTECTED ROUTES (login required) ───────────────────────
 Route::middleware('auth:sanctum')->group(function () {

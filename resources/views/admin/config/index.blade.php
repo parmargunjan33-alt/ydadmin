@@ -21,6 +21,7 @@
                                     <tr>
                                         <th>Key</th>
                                         <th>Value</th>
+                                        <th>Description</th>
                                         <th>Last Updated</th>
                                         <th>Actions</th>
                                     </tr>
@@ -32,7 +33,15 @@
                                                 <strong>{{ $config->key ?? '-' }}</strong>
                                             </td>
                                             <td>
-                                                <code>{{ Str::limit($config->value ?? '-', 50) }}</code>
+                                                @if ($config->key === 'subscription_price')
+                                                    <code>Rs. {{ number_format(((int) $config->value) / 100, 2) }}</code>
+                                                    <small class="text-muted d-block">{{ (int) $config->value }} paise</small>
+                                                @else
+                                                    <code>{{ Str::limit($config->value ?? '-', 50) }}</code>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                {{ $config->description ? Str::limit($config->description, 80) : '-' }}
                                             </td>
                                             <td>{{ $config->updated_at?->format('d M Y, H:i') ?? '-' }}</td>
                                             <td>

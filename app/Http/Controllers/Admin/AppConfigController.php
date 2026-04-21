@@ -21,6 +21,18 @@ class AppConfigController extends Controller
 
     public function update(Request $request, AppConfig $config)
     {
+        if ($config->key === 'subscription_price') {
+            $validated = $request->validate([
+                'value' => 'required|numeric|min:1',
+            ]);
+
+            $config->update([
+                'value' => (string) ((int) round($validated['value'] * 100)),
+            ]);
+
+            return redirect()->route('admin.config.index')->with('success', 'Subscription price updated successfully!');
+        }
+
         $validated = $request->validate([
             'value' => 'required|string',
         ]);

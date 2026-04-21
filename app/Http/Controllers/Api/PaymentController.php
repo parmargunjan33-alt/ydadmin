@@ -10,6 +10,20 @@ use Carbon\Carbon;
 
 class PaymentController extends Controller
 {
+    public function subscriptionPrice()
+    {
+        $amount = $this->subscriptionAmount();
+        $price = $amount / 100;
+
+        return response()->json([
+            'success' => true,
+            'amount' => $amount,
+            'price' => $price,
+            'formatted_price' => 'Rs. ' . number_format($price, 2),
+            'currency' => 'INR',
+        ]);
+    }
+
     public function createOrder(Request $request)
     {
         $request->validate(['semester_id' => 'required|exists:semesters,id']);
@@ -27,7 +41,7 @@ class PaymentController extends Controller
             ], 409);
         }
 
-        $amount = (int) AppConfig::getValue('subscription_price', 7500);
+        $amount = $this->subscriptionAmount();
 
         try {
             $response = Http::withBasicAuth(
@@ -157,5 +171,10 @@ class PaymentController extends Controller
         }
 
         return response()->json(['status' => 'ok']);
+    }
+
+    private function subscriptionAmount(): int
+    {
+        return max(100, (int) AppConfig::getValue('subscription_price', 7500));
     }
 }
