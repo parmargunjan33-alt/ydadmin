@@ -260,6 +260,203 @@ class AuthController extends Controller
         return response()->json(['success' => true, 'user' => $this->userResponse($user)]);
     }
 
+    // FORGOT PASSWORD: STEP 1 - Send OTP to Email
+    public function sendForgotPasswordOtp(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No account found with this email address.',
+            ], 404);
+        }
+
+        $otp = rand(100000, 999999);
+        
+        // Delete previous OTPs for this email
+        Otp::where('email', $request->email)
+            ->where('purpose', 'forgot-password')
+            ->delete();
+        
+        Otp::create([
+            'email'      => $request->email,
+            'otp'        => $otp,
+            'purpose'    => 'forgot-password',
+            'expires_at' => Carbon::now()->addMinutes(10),
+        ]);
+
+        // Send OTP via email
+        try {
+            $otpHtml = "
+                <html>
+                    <body style='font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px;'>
+                        <div style='max-width: 500px; background-color: white; margin: 0 auto; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>
+                            <h2 style='color: #333; text-align: center; margin-bottom: 20px;'>YD App - Password Reset</h2>
+                            <p style='color: #555; font-size: 16px; text-align: center; margin-bottom: 30px;'>
+                                Your One-Time Password (OTP) for password reset is:
+                            </p>
+                            <div style='background-color: #f0f0f0; border: 2px solid #007bff; padding: 15px; border-radius: 5px; text-align: center; margin-bottom: 30px;'>
+                                <h1 style='color: #007bff; margin: 0; letter-spacing: 5px; font-size: 32px;'>$otp</h1>
+                            </div>
+                            <p style='color: #777; font-size: 14px; text-align: center; margin-bottom: 20px;'>
+                                This OTP will expire in <strong>10 minutes</strong>
+                            </p>
+                            <p style='color: #999; font-size: 12px; text-align: center; margin-bottom: 0;'>
+                                If you didn't request this code, please ignore this email and your password will remain unchanged.
+                            </p>
+                        </div>
+                    </body>
+                </html>
+            ";
+            
+            \Mail::html($otpHtml, function ($message) use ($request) {
+                $message->to($request->email)
+                    ->subject('YD App - Password Reset Code');
+            });
+        } catch (\Exception $e) {
+            Log::error('Forgot Password OTP Email Sending Failed', [
+                'email' => $request->email,
+                'otp' => $otp,
+                'error' => $e->getMessage(),
+                'timestamp' => now(),
+            ]);
+        }
+
+        Log::info('Forgot Password OTP Sent', [
+            'email' => $request->email,
+            'timestamp' => now(),
+        ]);
+
+        // FOR TESTING — shows OTP in response (remove before going live)
+        return response()->json([
+            'success' => true,
+            'message' => 'OTP sent to your email successfully.',
+            'otp'     => $otp,
+        ]);
+    }
+
+    // FORGOT PASSWORD: STEP 2 - Verify OTP
+    public function verifyForgotPasswordOtp(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'otp'   => 'required|digits:6',
+        ]);
+
+        Log::info('Forgot Password OTP Verification Attempt', [
+            'email' => $request->email,
+            'otp' => $request->otp,
+            'timestamp' => now(),
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No account found with this email address.',
+            ], 404);
+        }
+
+        $otpRecord = Otp::where('email', $request->email)
+            ->where('otp', $request->otp)
+            ->where('purpose', 'forgot-password')
+            ->where('is_used', false)
+            ->where('expires_at', '>', Carbon::now())
+            ->latest()
+            ->first();
+
+        if (!$otpRecord) {
+            Log::warning('Forgot Password OTP Verification Failed - Invalid or Expired OTP', [
+                'email' => $request->email,
+                'otp' => $request->otp,
+                'timestamp' => now(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or expired OTP.',
+            ], 422);
+        }
+
+        $otpRecord->update(['is_used' => true]);
+        $verifyToken = base64_encode($request->email . ':' . time());
+
+        Log::info('Forgot Password OTP Verified Successfully', [
+            'email' => $request->email,
+            'otp_id' => $otpRecord->id,
+            'timestamp' => now(),
+        ]);
+
+        return response()->json([
+            'success'      => true,
+            'message'      => 'OTP verified successfully.',
+            'verify_token' => $verifyToken,
+        ]);
+    }
+
+    // FORGOT PASSWORD: STEP 3 - Reset Password
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'email'         => 'required|email',
+            'verify_token'  => 'required',
+            'password'      => 'required|min:6|confirmed',
+        ]);
+
+        Log::info('Password Reset Attempt', [
+            'email' => $request->email,
+            'timestamp' => now(),
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No account found with this email address.',
+            ], 404);
+        }
+
+        // Verify token
+        $decoded = base64_decode($request->verify_token);
+        $parts   = explode(':', $decoded);
+        
+        if ($parts[0] !== $request->email) {
+            Log::warning('Password Reset Failed - Invalid Verification Token', [
+                'email' => $request->email,
+                'timestamp' => now(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid verification token.',
+            ], 422);
+        }
+
+        // Update password
+        $user->update([
+            'password' => Hash::make($request->password),
+        ]);
+
+        // Logout all existing tokens for security
+        $user->tokens()->delete();
+
+        Log::info('Password Reset Successful', [
+            'email' => $request->email,
+            'user_id' => $user->id,
+            'timestamp' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password reset successfully. Please login with your new password.',
+        ]);
+    }
+
     private function userResponse($user)
     {
         return [
