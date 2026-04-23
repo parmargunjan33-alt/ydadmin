@@ -38,7 +38,7 @@ class PdfController extends Controller
             'language' => 'required|in:gujarati,english',
             'pdfs' => 'required|array|min:1',
             'pdfs.*' => 'required|file|mimes:pdf|max:102400', // 100MB per file
-            'is_free' => 'required|boolean',
+            'is_free' => 'boolean',
             'display_order' => 'required|integer',
         ]);
 
@@ -86,7 +86,7 @@ class PdfController extends Controller
             'title' => 'required|string|max:255',
             'type' => 'required|in:summary,past_papers,imp_questions,notes',
             'language' => 'required|in:gujarati,english',
-            'is_free' => 'required|boolean',
+            'is_free' => 'boolean',
             'display_order' => 'required|integer|min:1',
             'is_active' => 'required|boolean',
         ]);

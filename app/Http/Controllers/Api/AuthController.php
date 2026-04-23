@@ -38,12 +38,39 @@ class AuthController extends Controller
 
         // Send OTP via email
         try {
-            \Mail::raw("Your OTP is: $otp\n\nThis OTP will expire in 10 minutes.", function ($message) use ($request) {
+            $otpHtml = "
+                <html>
+                    <body style='font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px;'>
+                        <div style='max-width: 500px; background-color: white; margin: 0 auto; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>
+                            <h2 style='color: #333; text-align: center; margin-bottom: 20px;'>YD App - Email Verification</h2>
+                            <p style='color: #555; font-size: 16px; text-align: center; margin-bottom: 30px;'>
+                                Your One-Time Password (OTP) is:
+                            </p>
+                            <div style='background-color: #f0f0f0; border: 2px solid #007bff; padding: 15px; border-radius: 5px; text-align: center; margin-bottom: 30px;'>
+                                <h1 style='color: #007bff; margin: 0; letter-spacing: 5px; font-size: 32px;'>$otp</h1>
+                            </div>
+                            <p style='color: #777; font-size: 14px; text-align: center; margin-bottom: 20px;'>
+                                This OTP will expire in <strong>10 minutes</strong>
+                            </p>
+                            <p style='color: #999; font-size: 12px; text-align: center; margin-bottom: 0;'>
+                                If you didn't request this code, please ignore this email.
+                            </p>
+                        </div>
+                    </body>
+                </html>
+            ";
+            
+            \Mail::html($otpHtml, function ($message) use ($request) {
                 $message->to($request->email)
                     ->subject('YD App - Verification Code');
             });
         } catch (\Exception $e) {
-            // Email sending failed, but OTP is stored for testing
+            Log::error('OTP Email Sending Failed', [
+                'email' => $request->email,
+                'otp' => $otp,
+                'error' => $e->getMessage(),
+                'timestamp' => now(),
+            ]);
         }
 
         // FOR TESTING — shows OTP in response (remove before going live)
