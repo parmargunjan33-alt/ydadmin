@@ -22,10 +22,8 @@ class PdfController extends Controller
 
     public function create()
     {
-        $courses = Course::where('is_active', true)->get();
-        $semesters = Semester::where('is_active', true)->get();
-        $subjects = Subject::where('is_active', true)->get();
-        return view('admin.pdfs.create', compact('courses', 'semesters', 'subjects'));
+        $courses = Course::with(['semesters.subjects'])->where('is_active', true)->get();
+        return view('admin.pdfs.create', compact('courses'));
     }
 
     public function store(Request $request)

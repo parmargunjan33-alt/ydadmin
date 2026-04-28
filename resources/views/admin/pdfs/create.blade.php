@@ -30,30 +30,22 @@
                             @enderror
                         </div>
 
+
                         <div class="form-group mb-3">
                             <label for="semester_id" class="form-label">Semester *</label>
                             <select name="semester_id" id="semester_id" class="form-control @error('semester_id') is-invalid @enderror" required>
                                 <option value="">-- Select Semester --</option>
-                                @foreach ($semesters as $semester)
-                                    <option value="{{ $semester->id }}" {{ old('semester_id') == $semester->id ? 'selected' : '' }}>
-                                        {{ $semester->label }} ({{ $semester->course->name ?? 'N/A' }})
-                                    </option>
-                                @endforeach
                             </select>
                             @error('semester_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
+
                         <div class="form-group mb-3">
                             <label for="subject_id" class="form-label">Subject *</label>
                             <select name="subject_id" id="subject_id" class="form-control @error('subject_id') is-invalid @enderror" required>
                                 <option value="">-- Select Subject --</option>
-                                @foreach ($subjects as $subject)
-                                    <option value="{{ $subject->id }}" {{ old('subject_id') == $subject->id ? 'selected' : '' }}>
-                                        {{ $subject->name }} ({{ $subject->semester->label ?? 'N/A' }})
-                                    </option>
-                                @endforeach
                             </select>
                             @error('subject_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -137,46 +129,61 @@
     </div>
 
     <script>
+        // File list preview
         document.getElementById('pdfs').addEventListener('change', function() {
             const fileList = document.getElementById('fileList');
             fileList.innerHTML = '';
-            
             if (this.files.length > 0) {
                 const ul = document.createElement('ul');
                 ul.className = 'list-group mt-2';
-                
                 for (let file of this.files) {
                     const li = document.createElement('li');
                     li.className = 'list-group-item';
                     li.textContent = '📄 ' + file.name + ' (' + (file.size / 1024 / 1024).toFixed(2) + ' MB)';
                     ul.appendChild(li);
                 }
-                
                 fileList.appendChild(ul);
             }
         });
 
-        // Update semester dropdown based on course selection
+        // Dependent dropdowns logic
+        const courseData = @json($courses);
+
+        function resetDropdown(dropdown, placeholder) {
+            dropdown.innerHTML = `<option value="">${placeholder}</option>`;
+        }
+
         document.getElementById('course_id').addEventListener('change', function() {
             const courseId = this.value;
             const semesterSelect = document.getElementById('semester_id');
-            
+            const subjectSelect = document.getElementById('subject_id');
+            resetDropdown(semesterSelect, '-- Select Semester --');
+            resetDropdown(subjectSelect, '-- Select Subject --');
             if (courseId) {
-                // In a real application, you would fetch semesters via AJAX
-                // For now, we'll just clear the selection
-                semesterSelect.value = '';
+                const course = courseData.find(c => c.id == courseId);
+                if (course && course.semesters) {
+                    course.semesters.forEach(function(sem) {
+                        semesterSelect.innerHTML += `<option value="${sem.id}">${sem.label}</option>`;
+                    });
+                }
             }
         });
 
-        // Update subject dropdown based on semester selection
         document.getElementById('semester_id').addEventListener('change', function() {
+            const courseId = document.getElementById('course_id').value;
             const semesterId = this.value;
             const subjectSelect = document.getElementById('subject_id');
-            
-            if (semesterId) {
-                // In a real application, you would fetch subjects via AJAX
-                // For now, we'll just clear the selection
-                subjectSelect.value = '';
+            resetDropdown(subjectSelect, '-- Select Subject --');
+            if (courseId && semesterId) {
+                const course = courseData.find(c => c.id == courseId);
+                if (course && course.semesters) {
+                    const semester = course.semesters.find(s => s.id == semesterId);
+                    if (semester && semester.subjects) {
+                        semester.subjects.forEach(function(sub) {
+                            subjectSelect.innerHTML += `<option value="${sub.id}">${sub.name}</option>`;
+                        });
+                    }
+                }
             }
         });
     </script>
