@@ -24,6 +24,16 @@ class PaymentController extends Controller
         ]);
     }
 
+    public function razorpayKey()
+    {
+        $keyId = config('services.razorpay.key_id');
+
+        return response()->json([
+            'success' => true,
+            'key_id' => $keyId,
+        ]);
+    }
+
     public function createOrder(Request $request)
     {
         $request->validate(['semester_id' => 'required|exists:semesters,id']);

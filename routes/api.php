@@ -27,6 +27,7 @@ Route::get('/semesters/{courseId}',    [ContentController::class, 'semesters']);
 Route::get('/subjects/{semesterId}',    [ContentController::class, 'subjects']);
 
 Route::get('/payment/subscription-price', [PaymentController::class, 'subscriptionPrice']);
+Route::get('/payment/razorpay-key',      [PaymentController::class, 'razorpayKey']);
 Route::post('/payment/webhook',        [PaymentController::class, 'webhook']);
 
 // Legal
