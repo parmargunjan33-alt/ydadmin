@@ -220,29 +220,17 @@ class AuthController extends Controller
             Log::info('Old tokens invalidated due to logout-all', ['user_id' => $user->id]);
         }
 
-        // Single device lock check - prevent multiple logins
-        // Block if: user has active tokens AND device_id is different from stored
-        if ($user->tokens()->count() > 0 && $user->device_id && $user->device_id !== $deviceId) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You are already logged in on another device. Please logout from that device first.',
-                'error'   => 'already_logged_in',
-            ], 403);
-        }
-
-        // Additional check: If user has tokens but no device_id stored, block (inconsistent state)
-        if ($user->tokens()->count() > 0 && !$user->device_id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You are already logged in on another device. Please logout from that device first.',
-                'error'   => 'already_logged_in',
-            ], 403);
-        }
-
-        // If user has tokens and same device_id, allow re-login (refresh token)
-        // But don't create duplicate tokens - just return existing
-        if ($user->tokens()->count() > 0 && $user->device_id === $deviceId) {
-            // Return existing token (delete and recreate for fresh token)
+        // Single device login check - prevent multiple logins
+        // If user has any active token and is trying to login from a DIFFERENT device, block
+        if ($user->tokens()->count() > 0) {
+            if ($user->device_id !== $deviceId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are already logged in on another device. Please logout from that device first.',
+                    'error'   => 'already_logged_in',
+                ], 403);
+            }
+            // Same device - delete old token and create new one (refresh)
             $user->tokens()->delete();
         }
 
