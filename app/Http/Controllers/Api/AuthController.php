@@ -187,15 +187,12 @@ class AuthController extends Controller
             'email'     => 'nullable|email|required_without:mobile',
             'mobile'    => 'nullable|digits:10|required_without:email',
             'password'  => 'required',
-            'device_id' => 'required|string|max:255',
         ]);
 
         $user = User::query()
             ->when($request->filled('email'), fn ($query) => $query->where('email', $request->email))
             ->when($request->filled('mobile'), fn ($query) => $query->orWhere('mobile', $request->mobile))
             ->first();
-        
-        $deviceId = $request->input('device_id');
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
@@ -211,21 +208,8 @@ class AuthController extends Controller
             ], 403);
         }
 
-        // Check if user was logged out from all devices - invalidate old tokens
-        if ($user->logout_all_at) {
-            $user->tokens()->delete();
-            $user->update(['logout_all_at' => null]);
-        }
-
-        // Simple check: If user has any active token, block new login
-        $tokenCount = $user->tokens()->count();
-        
-        Log::info('=== LOGIN CHECK ===', [
-            'email' => $request->email,
-            'token_count' => $tokenCount,
-        ]);
-
-        if ($tokenCount > 0) {
+        // Check if user is already logged in (device_uuid is not null)
+        if ($user->device_uuid) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are already logged in on another device. Please logout from that device first.',
@@ -233,10 +217,13 @@ class AuthController extends Controller
             ], 403);
         }
 
+        // Generate new UUID for this login session
+        $newUuid = \Illuminate\Support\Str::uuid()->toString();
+
         $user->update([
-            'device_id'   => $deviceId,
-            'device_name' => $request->device_name ?? $user->device_name,
-            'is_active'   => true,
+            'device_uuid'   => $newUuid,
+            'device_name'  => $request->device_name ?? $user->device_name,
+            'is_active'    => true,
         ]);
 
         $token = $user->createToken('yd-app')->plainTextToken;
@@ -258,21 +245,11 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
-        Log::info('=== LOGOUT ===', [
-            'user_id' => $user->id,
-            'token_count_before' => $user->tokens()->count(),
-        ]);
+        // Clear device_uuid to allow new login
+        $user->update(['device_uuid' => null]);
 
-        // Delete current token - use direct query to ensure deletion
+        // Delete all tokens
         $user->tokens()->delete();
-        
-        // Also clear device_id
-        $user->update(['device_id' => null]);
-
-        Log::info('=== LOGOUT COMPLETE ===', [
-            'user_id' => $user->id,
-            'token_count_after' => $user->tokens()->count(),
-        ]);
 
         return response()->json(['success' => true, 'message' => 'Logged out successfully.']);
     }
@@ -293,20 +270,9 @@ class AuthController extends Controller
             ], 404);
         }
 
-        // Delete all tokens
+        // Clear device_uuid and delete all tokens
+        $user->update(['device_uuid' => null]);
         $user->tokens()->delete();
-
-        // Set logout_all_at timestamp to invalidate all existing tokens
-        $user->update([
-            'device_id' => null,
-            'logout_all_at' => Carbon::now(),
-        ]);
-
-        Log::info('User logged out from all devices', [
-            'user_id' => $user->id,
-            'email' => $user->email,
-            'timestamp' => now(),
-        ]);
 
         return response()->json([
             'success' => true,

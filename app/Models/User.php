@@ -12,7 +12,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name', 'email', 'mobile', 'password',
-        'device_id', 'device_name',
+        'device_id', 'device_name', 'device_uuid',
         'email_verified', 'email_verified_at',
         'mobile_verified', 'mobile_verified_at',
         'university_id', 'course_id', 'semester_id',
