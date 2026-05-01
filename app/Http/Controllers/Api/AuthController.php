@@ -218,7 +218,14 @@ class AuthController extends Controller
         }
 
         // Simple check: If user has any active token, block new login
-        if ($user->tokens()->count() > 0) {
+        $tokenCount = $user->tokens()->count();
+        
+        Log::info('=== LOGIN CHECK ===', [
+            'email' => $request->email,
+            'token_count' => $tokenCount,
+        ]);
+
+        if ($tokenCount > 0) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are already logged in on another device. Please logout from that device first.',
@@ -251,11 +258,21 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
-        // Delete current token
-        $user->currentAccessToken()->delete();
+        Log::info('=== LOGOUT ===', [
+            'user_id' => $user->id,
+            'token_count_before' => $user->tokens()->count(),
+        ]);
 
-        // Clear device_id so user can login from a new device next time
+        // Delete current token - use direct query to ensure deletion
+        $user->tokens()->delete();
+        
+        // Also clear device_id
         $user->update(['device_id' => null]);
+
+        Log::info('=== LOGOUT COMPLETE ===', [
+            'user_id' => $user->id,
+            'token_count_after' => $user->tokens()->count(),
+        ]);
 
         return response()->json(['success' => true, 'message' => 'Logged out successfully.']);
     }
