@@ -187,7 +187,7 @@ class AuthController extends Controller
             'email'     => 'nullable|email|required_without:mobile',
             'mobile'    => 'nullable|digits:10|required_without:email',
             'password'  => 'required',
-            'device_id' => 'nullable|string|max:255',
+            'device_id' => 'required|string|max:255', // Now required
         ]);
 
         $user = User::query()
@@ -213,13 +213,30 @@ class AuthController extends Controller
             ], 403);
         }
 
-        // Single device lock check
-        if ($user->device_id && $user->device_id !== $deviceId) {
+        // Single device lock check - prevent multiple logins
+        // Block if: user has active tokens AND device_id is different from stored
+        if ($user->tokens()->count() > 0 && $user->device_id && $user->device_id !== $deviceId) {
             return response()->json([
                 'success' => false,
-                'message' => 'Account is active on another device. Contact support to switch devices.',
-                'error'   => 'device_mismatch',
+                'message' => 'You are already logged in on another device. Please logout from that device first.',
+                'error'   => 'already_logged_in',
             ], 403);
+        }
+
+        // Additional check: If user has tokens but no device_id stored, block (inconsistent state)
+        if ($user->tokens()->count() > 0 && !$user->device_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are already logged in on another device. Please logout from that device first.',
+                'error'   => 'already_logged_in',
+            ], 403);
+        }
+
+        // If user has tokens and same device_id, allow re-login (refresh token)
+        // But don't create duplicate tokens - just return existing
+        if ($user->tokens()->count() > 0 && $user->device_id === $deviceId) {
+            // Return existing token (delete and recreate for fresh token)
+            $user->tokens()->delete();
         }
 
         $user->update([
@@ -228,7 +245,6 @@ class AuthController extends Controller
             'is_active'   => true,
         ]);
 
-        $user->tokens()->delete();
         $token = $user->createToken('yd-app')->plainTextToken;
 
         return response()->json([
@@ -481,22 +497,18 @@ class AuthController extends Controller
     {
         $deviceId = $request->input('device_id') ?: $request->header('X-Device-Id');
 
-        if ($deviceId) {
-            return $deviceId;
-        }
-
-        if (app()->isLocal()) {
-            if ($identifier) {
-                return 'local-dev-' . preg_replace('/[^A-Za-z0-9_-]/', '-', $identifier);
-            }
-
+        if (!$deviceId) {
             throw ValidationException::withMessages([
-                'device_id' => ['The device_id field is required when login identifier is missing.'],
+                'device_id' => ['The device_id field is required. Please update your app.'],
             ]);
         }
 
-        throw ValidationException::withMessages([
-            'device_id' => ['The device_id field is required.'],
+        Log::info('Device ID received', [
+            'device_id' => $deviceId,
+            'identifier' => $identifier,
+            'ip' => $request->ip(),
         ]);
+
+        return $deviceId;
     }
 }
