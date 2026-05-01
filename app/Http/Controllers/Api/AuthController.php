@@ -214,13 +214,13 @@ class AuthController extends Controller
         }
 
         // Single device lock check
-        // if ($user->device_id && $user->device_id !== $deviceId) {
-        //     return response()->json([
-        //         'success' => false,
-        //         'message' => 'Account is active on another device. Contact support to switch devices.',
-        //         'error'   => 'device_mismatch',
-        //     ], 403);
-        // }
+        if ($user->device_id && $user->device_id !== $deviceId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Account is active on another device. Contact support to switch devices.',
+                'error'   => 'device_mismatch',
+            ], 403);
+        }
 
         $user->update([
             'device_id'   => $deviceId,
@@ -248,7 +248,11 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
+        // Delete current token
         $user->currentAccessToken()->delete();
+
+        // Clear device_id so user can login from a new device next time
+        $user->update(['device_id' => null]);
 
         return response()->json(['success' => true, 'message' => 'Logged out successfully.']);
     }
