@@ -187,17 +187,15 @@ class AuthController extends Controller
             'email'     => 'nullable|email|required_without:mobile',
             'mobile'    => 'nullable|digits:10|required_without:email',
             'password'  => 'required',
-            'device_id' => 'required|string|max:255', // Now required
+            'device_id' => 'required|string|max:255',
         ]);
 
         $user = User::query()
             ->when($request->filled('email'), fn ($query) => $query->where('email', $request->email))
             ->when($request->filled('mobile'), fn ($query) => $query->orWhere('mobile', $request->mobile))
             ->first();
-        $deviceId = $this->resolveDeviceId(
-            $request,
-            $request->email ?: $request->mobile ?: $user?->email ?: $user?->mobile
-        );
+        
+        $deviceId = $request->input('device_id');
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
@@ -217,21 +215,15 @@ class AuthController extends Controller
         if ($user->logout_all_at) {
             $user->tokens()->delete();
             $user->update(['logout_all_at' => null]);
-            Log::info('Old tokens invalidated due to logout-all', ['user_id' => $user->id]);
         }
 
-        // Single device login check - prevent multiple logins
-        // If user has any active token and is trying to login from a DIFFERENT device, block
+        // Simple check: If user has any active token, block new login
         if ($user->tokens()->count() > 0) {
-            if ($user->device_id !== $deviceId) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'You are already logged in on another device. Please logout from that device first.',
-                    'error'   => 'already_logged_in',
-                ], 403);
-            }
-            // Same device - delete old token and create new one (refresh)
-            $user->tokens()->delete();
+            return response()->json([
+                'success' => false,
+                'message' => 'You are already logged in on another device. Please logout from that device first.',
+                'error'   => 'already_logged_in',
+            ], 403);
         }
 
         $user->update([
@@ -534,12 +526,6 @@ class AuthController extends Controller
                 'device_id' => ['The device_id field is required. Please update your app.'],
             ]);
         }
-
-        Log::info('Device ID received', [
-            'device_id' => $deviceId,
-            'identifier' => $identifier,
-            'ip' => $request->ip(),
-        ]);
 
         return $deviceId;
     }
