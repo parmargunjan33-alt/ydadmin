@@ -22,6 +22,9 @@ Route::post('/forgot-password/send-otp',    [AuthController::class, 'sendForgotP
 Route::post('/forgot-password/verify-otp',  [AuthController::class, 'verifyForgotPasswordOtp']);
 Route::post('/forgot-password/reset',       [AuthController::class, 'resetPassword']);
 
+// Logout from all devices (admin or user triggered)
+Route::post('/logout-all',              [AuthController::class, 'logoutAll']);
+
 Route::get('/universities',            [ContentController::class, 'universities']);
 Route::get('/courses/{universityId}',  [ContentController::class, 'courses']);
 Route::get('/semesters/{courseId}',    [ContentController::class, 'semesters']);

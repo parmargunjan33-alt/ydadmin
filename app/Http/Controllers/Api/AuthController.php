@@ -213,6 +213,13 @@ class AuthController extends Controller
             ], 403);
         }
 
+        // Check if user was logged out from all devices - invalidate old tokens
+        if ($user->logout_all_at) {
+            $user->tokens()->delete();
+            $user->update(['logout_all_at' => null]);
+            Log::info('Old tokens invalidated due to logout-all', ['user_id' => $user->id]);
+        }
+
         // Single device lock check - prevent multiple logins
         // Block if: user has active tokens AND device_id is different from stored
         if ($user->tokens()->count() > 0 && $user->device_id && $user->device_id !== $deviceId) {
@@ -271,6 +278,43 @@ class AuthController extends Controller
         $user->update(['device_id' => null]);
 
         return response()->json(['success' => true, 'message' => 'Logged out successfully.']);
+    }
+
+    // Logout from all devices (admin or user triggered)
+    public function logoutAll(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found.',
+            ], 404);
+        }
+
+        // Delete all tokens
+        $user->tokens()->delete();
+
+        // Set logout_all_at timestamp to invalidate all existing tokens
+        $user->update([
+            'device_id' => null,
+            'logout_all_at' => Carbon::now(),
+        ]);
+
+        Log::info('User logged out from all devices', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'timestamp' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Logged out from all devices successfully.',
+        ]);
     }
 
     // Get Profile
