@@ -244,7 +244,7 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         $user = $request->user();
-
+        Log::info('User logging out emailId'.$user->email);
         if($user){
             $user = User::where('email', $user->email)->first();
             $user->update(['device_uuid' => NULL]);
