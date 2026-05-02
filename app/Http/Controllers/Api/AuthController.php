@@ -245,22 +245,16 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
+        if($user){
+            $user = User::where('email', $user->email)->first();
+            $user->update(['device_uuid' => NULL]);
+        }
         Log::info('User logging out', [
             'user_id' => $user->id,
             'email' => $user->email,
             'name' => $user->name,
             'mobile' => $user->mobile,
             'device_uuid' => $user->device_uuid,
-            'timestamp' => now(),
-        ]);
-
-        // Clear device_uuid to allow new login
-        $user->update(['device_uuid' => null]);
-
-        Log::info('User device_uuid cleared after logout', [
-            'user_id' => $user->id,
-            'email' => $user->email,
-            'device_uuid' => $user->fresh()->device_uuid,  // Refresh to get updated value
             'timestamp' => now(),
         ]);
 
