@@ -207,9 +207,9 @@ class AuthController extends Controller
                 'message' => 'Your account has been disabled. Contact support.',
             ], 403);
         }
-
+        
         // Check if user is already logged in (device_uuid is not null)
-        if ($user->device_uuid) {
+        if (!empty($user->device_uuid)) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are already logged in on another device. Please logout from that device first.',
