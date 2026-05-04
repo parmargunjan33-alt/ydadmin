@@ -253,6 +253,52 @@
             margin-bottom: 8px;
         }
 
+        /* Pagination */
+        .pagination {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            justify-content: center;
+            padding-left: 0;
+            margin: 1.25rem 0;
+            list-style: none;
+        }
+
+        .pagination .page-item {
+            display: inline;
+        }
+
+        .pagination .page-link {
+            color: #667eea;
+            border: 1px solid #e9ecef;
+            padding: 0.5rem 0.75rem;
+            margin: 0;
+            border-radius: 0.375rem;
+            background: #ffffff;
+            min-width: 2.5rem;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .pagination .page-link:hover {
+            background-color: #f5f7fa;
+            border-color: #dfe3eb;
+        }
+
+        .pagination .page-item.active .page-link {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .pagination .page-item.disabled .page-link {
+            color: #6c757d;
+            pointer-events: none;
+            background: #ffffff;
+            border-color: #e9ecef;
+        }
+
         /* Flash Messages */
         .alert {
             border: none;
