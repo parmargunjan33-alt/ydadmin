@@ -12,12 +12,50 @@ use Illuminate\Support\Facades\Storage;
 
 class PdfController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $pdfs = PdfFile::with('subject.semester.course.university')
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
-        return view('admin.pdfs.index', compact('pdfs'));
+        $query = PdfFile::with(['subject.semester.course.university', 'semester.course']);
+
+        if ($request->filled('course_id')) {
+            $query->whereHas('semester', function ($q) use ($request) {
+                $q->where('course_id', $request->course_id);
+            });
+        }
+
+        if ($request->filled('semester_id')) {
+            $query->where('semester_id', $request->semester_id);
+        }
+
+        if ($request->filled('subject_id')) {
+            $query->where('subject_id', $request->subject_id);
+        }
+
+        $pdfs = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        if ($request->ajax()) {
+            $html = view('admin.pdfs.partials.pdfs-table', compact('pdfs'))->render();
+            return response()->json(['html' => $html]);
+        }
+
+        $courses = Course::with('university')->where('is_active', true)->get();
+        $semesters = collect();
+        $subjects = collect();
+
+        if ($request->filled('course_id')) {
+            $semesters = Semester::where('course_id', $request->course_id)
+                ->where('is_active', true)
+                ->orderBy('number')
+                ->get();
+        }
+
+        if ($request->filled('semester_id')) {
+            $subjects = Subject::where('semester_id', $request->semester_id)
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get();
+        }
+
+        return view('admin.pdfs.index', compact('pdfs', 'courses', 'semesters', 'subjects'));
     }
 
     public function create()

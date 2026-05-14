@@ -9,10 +9,41 @@ use Illuminate\Http\Request;
 
 class SubjectController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $subjects = Subject::with('semester.course.university')->paginate(15);
-        return view('admin.subjects.index', compact('subjects'));
+        $query = Subject::with('semester.course.university');
+
+        // Apply filters
+        if ($request->filled('course_id')) {
+            $query->whereHas('semester', function ($q) use ($request) {
+                $q->where('course_id', $request->course_id);
+            });
+        }
+
+        if ($request->filled('semester_id')) {
+            $query->where('semester_id', $request->semester_id);
+        }
+
+        $subjects = $query->paginate(15);
+
+        // If AJAX request, return JSON
+        if ($request->ajax()) {
+            $html = view('admin.subjects.partials.subjects-table', compact('subjects'))->render();
+            return response()->json([
+                'html' => $html,
+                'pagination' => [
+                    'current_page' => $subjects->currentPage(),
+                    'last_page' => $subjects->lastPage(),
+                    'per_page' => $subjects->perPage(),
+                    'total' => $subjects->total(),
+                ]
+            ]);
+        }
+
+        // Get courses for filter dropdown
+        $courses = \App\Models\Course::with('university')->where('is_active', true)->get();
+
+        return view('admin.subjects.index', compact('subjects', 'courses'));
     }
 
     public function create()
