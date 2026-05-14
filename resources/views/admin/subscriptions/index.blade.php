@@ -13,6 +13,33 @@
                         <i class="bi bi-receipt"></i> Subscriptions List
                     </div>
                     <div>
+                        <form method="GET" class="d-flex gap-2 align-items-center">
+                            <select name="user_id" class="form-select form-select-sm">
+                                <option value="">All Users</option>
+                                @foreach($users as $user)
+                                    <option value="{{ $user->id }}" @selected(old('user_id', $userId) == $user->id)>{{ $user->name }} ({{ $user->email }})</option>
+                                @endforeach
+                            </select>
+
+                            <select name="course_id" class="form-select form-select-sm">
+                                <option value="">All Courses</option>
+                                @foreach($courses as $course)
+                                    <option value="{{ $course->id }}" @selected(old('course_id', $courseId) == $course->id)>{{ $course->name }}</option>
+                                @endforeach
+                            </select>
+
+                            <select name="semester_id" class="form-select form-select-sm">
+                                <option value="">All Semesters</option>
+                                @foreach($semesters as $semester)
+                                    <option value="{{ $semester->id }}" @selected(old('semester_id', $semesterId) == $semester->id)>{{ $semester->label }}</option>
+                                @endforeach
+                            </select>
+
+                            <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+                            <a href="{{ route('admin.subscriptions.index') }}" class="btn btn-outline-secondary btn-sm">Reset</a>
+                        </form>
+                    </div>
+                    <div>
                         <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Search subscriptions..." style="width: 250px;">
                     </div>
                 </div>
@@ -45,10 +72,10 @@
                                             <td>
                                                 <span class="badge bg-info">{{ ucfirst($sub->subscription_type ?? 'standard') }}</span>
                                             </td>
-                                            <td>{{ $sub->start_date?->format('d M Y') ?? '-' }}</td>
-                                            <td>{{ $sub->end_date?->format('d M Y') ?? '-' }}</td>
+                                            <td>{{ $sub->paid_at?->format('d M Y') ?? '-' }}</td>
+                                            <td>{{ $sub->expires_at?->format('d M Y') ?? '-' }}</td>
                                             <td>
-                                                @if ($sub->is_active)
+                                                @if ($sub->expires_at >= now())
                                                     <span class="badge bg-success">Active</span>
                                                 @else
                                                     <span class="badge bg-danger">Inactive</span>

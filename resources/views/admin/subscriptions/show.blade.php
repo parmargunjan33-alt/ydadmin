@@ -44,7 +44,7 @@
                         <div class="col-md-6">
                             <label class="form-label text-muted">Status</label>
                             <p>
-                                @if ($subscription->is_active)
+                                @if ($subscription->expires_at >= now())
                                     <span class="badge bg-success">Active</span>
                                 @else
                                     <span class="badge bg-danger">Inactive</span>
@@ -56,11 +56,11 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label text-muted">Start Date</label>
-                            <p class="fw-bold">{{ $subscription->start_date?->format('d M Y') ?? '-' }}</p>
+                            <p class="fw-bold">{{ $subscription->paid_at?->format('d M Y') ?? '-' }}</p>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label text-muted">End Date</label>
-                            <p class="fw-bold">{{ $subscription->end_date?->format('d M Y') ?? '-' }}</p>
+                            <p class="fw-bold">{{ $subscription->expires_at?->format('d M Y') ?? '-' }}</p>
                         </div>
                     </div>
 
