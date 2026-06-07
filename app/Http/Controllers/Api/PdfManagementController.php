@@ -123,8 +123,19 @@ class PdfManagementController extends Controller
         $this->applySearch($query, $request->query('search'), ['title']);
         $this->applyBooleanFilter($query, $request, 'is_active', 'is_active', true);
 
-        $pdfs = $query->orderBy('display_order')
-            ->get(['id', 'title', 'language', 'is_free', 'display_order']);
+$pdfs = $query->orderBy('display_order')
+    ->get(['id', 'title', 'language', 'is_free', 'display_order', 'file_path'])
+    ->map(function ($pdf) {
+        return [
+            'id' => $pdf->id,
+            'title' => $pdf->title,
+            'language' => $pdf->language,
+            'is_free' => $pdf->is_free,
+            'display_order' => $pdf->display_order,
+            // ✅ ADD THIS
+            'pdf_url' => Storage::disk('public')->url($pdf->file_path),
+        ];
+    });
 
         $isSubscribed = Subscription::where('user_id', $request->user()->id)
             ->where('semester_id', $semesterId)
